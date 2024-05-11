@@ -1,25 +1,33 @@
-
-    <template>
-      <h1>Selamat Datang Di To Do List Zakia</h1>
-      <div class="todo-container">
-        <input v-model="newTodo" placeholder="Masukkan Kegiatan">
-        <button @click="addTodo">Tambah Kegiatan</button>
-        <br><br>
-        <button @click="hideCompleted = !hideCompleted">{{ hideCompleted ? 'Tampilkan Semua' : 'Sembunyikan yang sudah selesai' }}</button>
-        <ul>
-          <li v-for="todo in visibleTodos" :key="todo.id" class="todo-item">
-            <span :class="{ completed: todo.completed }" @click="toggleComplete(todo)">{{ todo.text }}</span>
-            <div class="action-buttons">
-              <button v-if="!todo.completed" @click="completeTodo(todo.id)" class="complete-btn">Selesai</button>
-              <button v-if="todo.completed" @click="unCompleteTodo(todo.id)" class="incomplete-btn">Belum Selesai</button>
-              <button @click="removeTodo(todo.id)" class="delete-btn">Hapus</button>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </template>
- 
-
+<template>
+  <h1>Selamat Datang Di To Do List Zakia</h1>
+  <div class="todo-container">
+    <input v-model="newTodo" placeholder="Masukkan Kegiatan">
+    <button @click="addTodo">Tambah Kegiatan</button>
+    <br><br>
+    <button @click="hideCompleted = !hideCompleted">{{ hideCompleted ? 'Tampilkan Semua' : 'Sembunyikan yang sudah selesai' }}</button>
+    <ul>
+      <li v-for="(todo, index) in visibleTodos" :key="todo.id" class="todo-item">
+        <span :class="{ completed: todo.completed }" @click="toggleComplete(todo)">{{ todo.text }}</span>
+        <template v-if="editingIndex === index">
+          <input
+            v-model="editedTaskTitle"
+            @keyup.enter="saveTask(index)"
+            @keyup.esc="cancelEdit"
+            class="form-control"
+          />
+          <button @click="saveTask(index)" class="btn btn-sm btn-success mx-2">Save</button>
+          <button @click="cancelEdit" class="btn btn-sm btn-secondary">Cancel</button>
+        </template>
+        <div class="action-buttons">
+          <button v-if="!todo.completed" @click="completeTodo(todo.id)" class="complete-btn">Selesai</button>
+          <button v-if="todo.completed" @click="unCompleteTodo(todo.id)" class="incomplete-btn">Belum Selesai</button>
+          <button @click="editTask(todo.id)" class="btn btn-sm btn-primary mx-2">Edit</button>
+          <button @click="removeTodo(todo.id)" class="delete-btn">Hapus</button>
+        </div>
+      </li>
+    </ul>
+  </div>
+</template>
 
 <script>
 export default {
@@ -29,16 +37,9 @@ export default {
       todos: [],
       newTodo: '',
       nextId: 1,
-      hideCompleted: false
-    }
-  },
-  computed: {
-    visibleTodos() {
-      if (this.hideCompleted) {
-        return this.todos.filter(todo => !todo.completed);
-      } else {
-        return this.todos;
-      }
+      hideCompleted: false,
+      editingIndex: null,
+      editedTaskTitle: ''
     }
   },
   methods: {
@@ -51,6 +52,18 @@ export default {
         });
         this.newTodo = '';
       }
+    },
+    editTask(id) {
+      const todo = this.todos.find(todo => todo.id === id);
+      if (todo) {
+        this.editingIndex = this.todos.findIndex(todo => todo.id === id);
+        this.editedTaskTitle = todo.text;
+      }
+    },
+    saveTask(index) {
+      this.todos[this.editingIndex].text = this.editedTaskTitle;
+      this.editingIndex = null;
+      this.editedTaskTitle = '';
     },
     removeTodo(id) {
       this.todos = this.todos.filter(todo => todo.id !== id);
@@ -69,6 +82,19 @@ export default {
     },
     toggleComplete(todo) {
       todo.completed = !todo.completed;
+    },
+    cancelEdit() {
+      this.editingIndex = null;
+      this.editedTaskTitle = '';
+    }
+  },
+  computed: {
+    visibleTodos() {
+      if (this.hideCompleted) {
+        return this.todos.filter(todo => !todo.completed);
+      } else {
+        return this.todos;
+      }
     }
   }
 }
